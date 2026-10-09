@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Secure CloudFormation Template
+
+Resources:
+  SecureBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      LoggingConfiguration:
+        DestinationBucketName: log-bucket
+        LogFilePrefix: logs/
+
+  SecureBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SecureBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: RestrictedRead
+            Effect: Allow
+            Principal:
+              AWS: arn:aws:iam::123456789012:root
+            Action:
+              - s3:GetObject
+            Resource: arn:aws:s3:::secure-bucket/*
+
+  SecureSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Restricted security group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 10.0.0.0/16
+
+  SecureRDS:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceClass: db.r5.large
+      PubliclyAccessible: false
+      StorageEncrypted: true
+
+  SecureVolume:
+    Type: AWS::EC2::Volume
+    Properties:
+      AvailabilityZone: us-east-1a
+      Size: 50
+      Encrypted: true
+
+  SecureIAMPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: RestrictedPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+            Resource: arn:aws:s3:::secure-bucket/*

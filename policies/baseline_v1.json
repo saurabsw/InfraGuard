@@ -1,0 +1,207 @@
+{
+  "version": "1.0.0",
+  "name": "InfraGuard Multi-Cloud Security Baseline v1",
+  "description": "Deterministic security baseline containing 25 rules across AWS, Azure, and GCP.",
+  "rules": [
+    {
+      "rule_id": "IG-AWS-001",
+      "title": "S3 Public Read Access",
+      "provider": "aws",
+      "severity": "CRITICAL",
+      "resource_types": ["s3_bucket_policy"],
+      "description": "Detect S3 bucket policies that explicitly permit public read access."
+    },
+    {
+      "rule_id": "IG-AWS-002",
+      "title": "S3 Public Write Access",
+      "provider": "aws",
+      "severity": "CRITICAL",
+      "resource_types": ["s3_bucket_policy"],
+      "description": "Detect S3 bucket policies that permit public write access."
+    },
+    {
+      "rule_id": "IG-AWS-003",
+      "title": "S3 Block Public Access Missing or Disabled",
+      "provider": "aws",
+      "severity": "HIGH",
+      "resource_types": ["s3_public_access_block"],
+      "description": "Detect missing or explicitly disabled S3 Block Public Access settings."
+    },
+    {
+      "rule_id": "IG-AWS-004",
+      "title": "Internet-Wide SSH Ingress (Port 22)",
+      "provider": "aws",
+      "severity": "CRITICAL",
+      "resource_types": ["security_group", "security_group_rule"],
+      "description": "Detect security groups allowing unrestricted ingress on port 22."
+    },
+    {
+      "rule_id": "IG-AWS-005",
+      "title": "Internet-Wide RDP Ingress (Port 3389)",
+      "provider": "aws",
+      "severity": "CRITICAL",
+      "resource_types": ["security_group", "security_group_rule"],
+      "description": "Detect security groups allowing unrestricted ingress on port 3389."
+    },
+    {
+      "rule_id": "IG-AWS-006",
+      "title": "Overly Permissive Inbound Network Rules",
+      "provider": "aws",
+      "severity": "HIGH",
+      "resource_types": ["security_group", "security_group_rule"],
+      "description": "Detect ingress rules permitting unrestricted traffic on all protocols or all ports."
+    },
+    {
+      "rule_id": "IG-AWS-007",
+      "title": "RDS Instance Publicly Accessible",
+      "provider": "aws",
+      "severity": "CRITICAL",
+      "resource_types": ["rds_instance"],
+      "description": "Detect RDS instances configured with public accessibility enabled."
+    },
+    {
+      "rule_id": "IG-AWS-008",
+      "title": "RDS Storage Encryption Disabled",
+      "provider": "aws",
+      "severity": "HIGH",
+      "resource_types": ["rds_instance"],
+      "description": "Detect RDS instances where storage encryption is explicitly disabled or omitted."
+    },
+    {
+      "rule_id": "IG-AWS-009",
+      "title": "EBS Volume Encryption Disabled",
+      "provider": "aws",
+      "severity": "HIGH",
+      "resource_types": ["ebs_volume"],
+      "description": "Detect EBS volumes where encryption is explicitly disabled or omitted."
+    },
+    {
+      "rule_id": "IG-IAM-001",
+      "title": "Overly Broad IAM Permissions (Wildcard Action & Resource)",
+      "provider": "aws",
+      "severity": "CRITICAL",
+      "resource_types": ["iam_policy", "iam_role_policy", "iam_policy_document"],
+      "description": "Detect IAM policies granting wildcard actions and resources in Allow statements."
+    },
+    {
+      "rule_id": "IG-AWS-010",
+      "title": "S3 Bucket Server Access Logging Disabled",
+      "provider": "aws",
+      "severity": "MEDIUM",
+      "resource_types": ["s3_bucket", "s3_bucket_logging"],
+      "description": "Detect S3 buckets without explicit access logging configured."
+    },
+    {
+      "rule_id": "IG-AZ-001",
+      "title": "Storage Account Allows Public Blob Access",
+      "provider": "azure",
+      "severity": "HIGH",
+      "resource_types": ["storage_account"],
+      "description": "Detect Azure storage accounts where public blob or nested item access is allowed."
+    },
+    {
+      "rule_id": "IG-AZ-002",
+      "title": "NSG Inbound SSH Exposed to Internet (Port 22)",
+      "provider": "azure",
+      "severity": "CRITICAL",
+      "resource_types": ["network_security_group", "network_security_rule"],
+      "description": "Detect Azure Network Security Groups allowing internet-wide inbound SSH on port 22."
+    },
+    {
+      "rule_id": "IG-AZ-003",
+      "title": "NSG Inbound RDP Exposed to Internet (Port 3389)",
+      "provider": "azure",
+      "severity": "CRITICAL",
+      "resource_types": ["network_security_group", "network_security_rule"],
+      "description": "Detect Azure Network Security Groups allowing internet-wide inbound RDP on port 3389."
+    },
+    {
+      "rule_id": "IG-AZ-004",
+      "title": "Storage Account Secure Transfer Disabled",
+      "provider": "azure",
+      "severity": "HIGH",
+      "resource_types": ["storage_account"],
+      "description": "Detect Azure storage accounts that allow unencrypted HTTP traffic."
+    },
+    {
+      "rule_id": "IG-AZ-005",
+      "title": "Storage Account Infrastructure Encryption Missing",
+      "provider": "azure",
+      "severity": "MEDIUM",
+      "resource_types": ["storage_account"],
+      "description": "Detect Azure storage accounts without double infrastructure encryption enabled."
+    },
+    {
+      "rule_id": "IG-AZ-006",
+      "title": "NSG Overly Permissive Inbound Traffic",
+      "provider": "azure",
+      "severity": "HIGH",
+      "resource_types": ["network_security_group", "network_security_rule"],
+      "description": "Detect inbound rules allowing all protocols and all ports from any internet source."
+    },
+    {
+      "rule_id": "IG-AZ-007",
+      "title": "Azure Database Public Network Access Enabled",
+      "provider": "azure",
+      "severity": "CRITICAL",
+      "resource_types": ["sql_server", "postgresql_server", "mysql_server"],
+      "description": "Detect Azure SQL, PostgreSQL, or MySQL servers with public network access enabled."
+    },
+    {
+      "rule_id": "IG-GCP-001",
+      "title": "Cloud Storage Public IAM Access",
+      "provider": "gcp",
+      "severity": "CRITICAL",
+      "resource_types": ["storage_iam_binding"],
+      "description": "Detect Cloud Storage IAM bindings that grant access to allUsers or allAuthenticatedUsers."
+    },
+    {
+      "rule_id": "IG-GCP-002",
+      "title": "GCP Firewall SSH Exposed to Internet (Port 22)",
+      "provider": "gcp",
+      "severity": "CRITICAL",
+      "resource_types": ["firewall_rule"],
+      "description": "Detect Google Cloud VPC firewall ingress rules permitting port 22 from 0.0.0.0/0."
+    },
+    {
+      "rule_id": "IG-GCP-003",
+      "title": "GCP Firewall RDP Exposed to Internet (Port 3389)",
+      "provider": "gcp",
+      "severity": "CRITICAL",
+      "resource_types": ["firewall_rule"],
+      "description": "Detect Google Cloud VPC firewall ingress rules permitting port 3389 from 0.0.0.0/0."
+    },
+    {
+      "rule_id": "IG-GCP-004",
+      "title": "GCP Firewall Overly Permissive Ingress",
+      "provider": "gcp",
+      "severity": "HIGH",
+      "resource_types": ["firewall_rule"],
+      "description": "Detect firewall ingress rules allowing all traffic or all protocols from 0.0.0.0/0."
+    },
+    {
+      "rule_id": "IG-GCP-005",
+      "title": "Cloud Storage Uniform Bucket-Level Access Disabled",
+      "provider": "gcp",
+      "severity": "MEDIUM",
+      "resource_types": ["storage_bucket"],
+      "description": "Detect Cloud Storage buckets where uniform bucket-level access is not enabled."
+    },
+    {
+      "rule_id": "IG-GCP-006",
+      "title": "Cloud Storage Public Access Prevention Missing",
+      "provider": "gcp",
+      "severity": "MEDIUM",
+      "resource_types": ["storage_bucket"],
+      "description": "Detect Cloud Storage buckets where public access prevention is not set to 'enforced'."
+    },
+    {
+      "rule_id": "IG-GCP-007",
+      "title": "Overly Broad GCP Project IAM Role Grants",
+      "provider": "gcp",
+      "severity": "HIGH",
+      "resource_types": ["project_iam_binding"],
+      "description": "Detect project IAM bindings granting broad or primitive roles to public principals."
+    }
+  ]
+}

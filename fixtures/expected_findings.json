@@ -1,0 +1,104 @@
+{
+  "fixtures": {
+    "aws/terraform/insecure.tf": {
+      "provider": "aws",
+      "format": "terraform",
+      "expected_fails": [
+        "IG-AWS-001",
+        "IG-AWS-002",
+        "IG-AWS-003",
+        "IG-AWS-004",
+        "IG-AWS-005",
+        "IG-AWS-006",
+        "IG-AWS-007",
+        "IG-AWS-008",
+        "IG-AWS-009",
+        "IG-IAM-001",
+        "IG-AWS-010"
+      ],
+      "expected_score_band": "CRITICAL"
+    },
+    "aws/terraform/secure.tf": {
+      "provider": "aws",
+      "format": "terraform",
+      "expected_fails": [],
+      "expected_score_band": "LOW"
+    },
+    "aws/cloudformation/insecure.yaml": {
+      "provider": "aws",
+      "format": "cloudformation",
+      "expected_fails": [
+        "IG-AWS-001",
+        "IG-AWS-002",
+        "IG-AWS-004",
+        "IG-AWS-005",
+        "IG-AWS-006",
+        "IG-AWS-007",
+        "IG-AWS-008",
+        "IG-AWS-009",
+        "IG-IAM-001",
+        "IG-AWS-010"
+      ],
+      "expected_score_band": "CRITICAL"
+    },
+    "aws/cloudformation/secure.yaml": {
+      "provider": "aws",
+      "format": "cloudformation",
+      "expected_fails": [],
+      "expected_score_band": "LOW"
+    },
+    "azure/terraform/insecure.tf": {
+      "provider": "azure",
+      "format": "terraform",
+      "expected_fails": [
+        "IG-AZ-001",
+        "IG-AZ-002",
+        "IG-AZ-003",
+        "IG-AZ-004",
+        "IG-AZ-005",
+        "IG-AZ-006",
+        "IG-AZ-007"
+      ],
+      "expected_score_band": "CRITICAL"
+    },
+    "azure/terraform/secure.tf": {
+      "provider": "azure",
+      "format": "terraform",
+      "expected_fails": [],
+      "expected_score_band": "LOW"
+    },
+    "gcp/terraform/insecure.tf": {
+      "provider": "gcp",
+      "format": "terraform",
+      "expected_fails": [
+        "IG-GCP-001",
+        "IG-GCP-002",
+        "IG-GCP-003",
+        "IG-GCP-004",
+        "IG-GCP-005",
+        "IG-GCP-006",
+        "IG-GCP-007"
+      ],
+      "expected_score_band": "CRITICAL"
+    },
+    "gcp/terraform/secure.tf": {
+      "provider": "gcp",
+      "format": "terraform",
+      "expected_fails": [],
+      "expected_score_band": "LOW"
+    },
+    "malformed/malformed.tf": {
+      "provider": "aws",
+      "format": "terraform",
+      "expected_parse_success": false
+    },
+    "indeterminate/indeterminate.tf": {
+      "provider": "aws",
+      "format": "terraform",
+      "expected_not_evaluated": [
+        "IG-AWS-008",
+        "IG-AWS-009"
+      ]
+    }
+  }
+}
