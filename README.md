@@ -143,8 +143,16 @@ infraguard/
     ├── threat-model.md      # STRIDE & DREAD threat analysis and boundary guarantees
     ├── api-examples.md      # REST API request/response curl documentation
     ├── demo-script.md       # Repeatable end-to-end demonstration guide
-    └── presentation.md      # 11-slide executive presentation deck
+    ├── presentation.md      # 11-slide executive presentation deck (Markdown)
+    └── presentation.html    # Standalone interactive HTML presentation slide deck
 ```
+
+### View Interactive HTML Presentation
+
+Open `docs/presentation.html` (or `presentation.html` in the project root) directly in any web browser.
+- **Navigation**: Use <kbd>→</kbd> / <kbd>←</kbd> arrow keys or <kbd>Space</kbd> to change slides.
+- **Speaker Notes**: Press <kbd>N</kbd> to toggle speaker notes.
+- **Fullscreen**: Press <kbd>F</kbd> to toggle fullscreen.
 
 ## API Endpoints
 

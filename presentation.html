@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InfraGuard — Multi-Cloud IaC Security Guardrail Auditor</title>
+  <style>
+    :root {
+      --bg-primary: #0a0f1d;
+      --bg-card: #131b2e;
+      --bg-card-hover: #1c2742;
+      --border-color: #23314f;
+      --accent-cyan: #00d2ff;
+      --accent-blue: #3a86ff;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-amber: #f59e0b;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    /* Top Progress Bar */
+    #progress-bar {
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+      width: 0%;
+      transition: width 0.3s ease;
+      z-index: 100;
+    }
+
+    /* Header Nav */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 32px;
+      background: rgba(10, 15, 29, 0.85);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border-color);
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: 0.5px;
+    }
+
+    .brand-badge {
+      background: linear-gradient(135deg, #00d2ff, #3a86ff);
+      color: #000;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .slide-counter {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Slide Deck Container */
+    #deck {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(40px);
+      transition: opacity 0.35s ease, transform 0.35s ease, visibility 0.35s;
+      padding: 40px 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      overflow-y: auto;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0);
+    }
+
+    /* Slide Typography & Content */
+    .slide-tag {
+      color: var(--accent-cyan);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    h1.slide-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.2;
+      margin-bottom: 24px;
+      background: linear-gradient(135deg, #ffffff 40%, var(--accent-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    h2.slide-subtitle {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-top: -16px;
+      margin-bottom: 28px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 24px;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .card:hover {
+      border-color: var(--accent-cyan);
+      transform: translateY(-2px);
+    }
+
+    .card h3 {
+      font-size: 1.2rem;
+      color: #fff;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card p, .card ul {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .card ul {
+      list-style-position: inside;
+      padding-left: 4px;
+    }
+
+    .card li {
+      margin-bottom: 6px;
+    }
+
+    .highlight {
+      color: var(--accent-cyan);
+      font-weight: 600;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge-critical { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+    .badge-high { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b; }
+    .badge-medium { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #3b82f6; }
+    .badge-low { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
+
+    /* Code & Terminal Styling */
+    pre, code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    pre {
+      background: #070b14;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      color: #38bdf8;
+      font-size: 0.85rem;
+      overflow-x: auto;
+      line-height: 1.5;
+    }
+
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      text-align: left;
+    }
+
+    th {
+      background: #172138;
+      color: #ffffff;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    td {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-muted);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text-main);
+    }
+
+    /* Metric Box */
+    .metric-box {
+      background: #10182b;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .metric-value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--accent-cyan);
+    }
+
+    .metric-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+
+    /* Speaker Notes Modal */
+    #speaker-notes-drawer {
+      position: fixed;
+      bottom: 60px;
+      left: 32px;
+      right: 32px;
+      background: rgba(13, 20, 38, 0.95);
+      border: 1px solid var(--accent-cyan);
+      border-radius: 8px;
+      padding: 16px 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      display: none;
+      z-index: 90;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    #speaker-notes-drawer.open {
+      display: block;
+    }
+
+    .speaker-notes-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .speaker-notes-content {
+      font-size: 0.9rem;
+      color: #e2e8f0;
+      line-height: 1.5;
+    }
+
+    /* Footer Controls */
+    footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 32px;
+      background: rgba(10, 15, 29, 0.85);
+      border-top: 1px solid var(--border-color);
+      z-index: 10;
+    }
+
+    .controls-left {
+      display: flex;
+      gap: 16px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .kbd {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+
+    .controls-right {
+      display: flex;
+      gap: 10px;
+    }
+
+    button.btn-ctrl {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+    }
+
+    button.btn-ctrl:hover {
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+      color: #fff;
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        overflow: visible;
+        height: auto;
+      }
+      header, footer, #progress-bar, #speaker-notes-drawer {
+        display: none !important;
+      }
+      .slide {
+        position: relative !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
+        page-break-after: always;
+        height: 100vh;
+        padding: 40px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="progress-bar"></div>
+
+  <header>
+    <div class="brand">
+      <span>🛡️ InfraGuard</span>
+      <span class="brand-badge">v1.0.0 Architecture Review</span>
+    </div>
+    <div class="slide-counter" id="counter">Slide 1 / 11</div>
+  </header>
+
+  <main id="deck">
+
+    <!-- Slide 1: Title -->
+    <section class="slide active" data-notes="Welcome everyone. Today we are presenting InfraGuard 1.0.0, an API-first multi-cloud IaC security guardrail auditor. In this session we will cover problem statements, decoupled architecture, deterministic risk scoring, 25 security guardrails, test verification, and enterprise roadmap.">
+      <div class="slide-tag">Executive Briefing & Architecture Review</div>
+      <h1 class="slide-title">InfraGuard</h1>
+      <h2 class="slide-subtitle">API-First Multi-Cloud Infrastructure Security Guardrail Auditor</h2>
+      
+      <div class="grid-3" style="margin-top: 16px;">
+        <div class="card">
+          <h3>⚡ API-First Design</h3>
+          <p>Completely independent FastAPI backend serving REST endpoints. Zero tight coupling between business logic and the frontend presentation layer.</p>
+        </div>
+        <div class="card">
+          <h3>☁️ Multi-Cloud Guardrails</h3>
+          <p>Deterministic static analysis of Terraform (AWS, Azure, GCP) and CloudFormation (AWS) with 25 CIS-aligned security rules.</p>
+        </div>
+        <div class="card">
+          <h3>🔒 100% Offline Static Analysis</h3>
+          <p>Pure AST parsing with zero cloud credentials, no cloud network calls, in-flight secret redaction, and no arbitrary code execution.</p>
+        </div>
+      </div>
+
+      <div style="margin-top: 32px; display: flex; gap: 16px; align-items: center;">
+        <span class="badge badge-low">Status: Release Ready</span>
+        <span class="badge badge-medium">175 Tests Passed (89% Coverage)</span>
+        <span class="badge badge-high">SQLite WAL Engine</span>
+        <span class="badge badge-critical">100% Clean Ruff Lint</span>
+      </div>
+    </section>
+
+    <!-- Slide 2: The Problem -->
+    <section class="slide" data-notes="Why did we build InfraGuard? In enterprise environments, pre-deployment IaC templates are the root cause of production cloud breaches. Current tooling is either tightly coupled into monolithic GUIs, nondeterministic, requires cloud credentials that present supply-chain risks, or silently skips unsupported blocks giving false confidence.">
+      <div class="slide-tag">Industry Context & Pain Points</div>
+      <h1 class="slide-title">The Cloud Shift-Left Challenge</h1>
+      <h2 class="slide-subtitle">Why traditional IaC auditing and compliance workflows fall short</h2>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>❌ Shift-Left Blindspots</h3>
+          <ul>
+            <li>Critical misconfigurations (open SSH/RDP, public S3 buckets, wildcard IAM) slip through code reviews.</li>
+            <li>Inconsistent security benchmarks between AWS, Azure, and GCP confuse platform engineers.</li>
+            <li>Monolithic security scanners fail when integrated into headless CI/CD automation.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>❌ Opaque & Risky Tooling</h3>
+          <ul>
+            <li>Tools that contact cloud APIs require high-privilege credentials, creating credential leakage risks.</li>
+            <li>Black-box risk scoring models that cannot explain why a penalty was applied.</li>
+            <li><b>The Dangerous Assumption:</b> Scanners silently dropping unsupported resources and falsely claiming "0 issues found".</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 3: The InfraGuard Solution -->
+    <section class="slide" data-notes="InfraGuard solves this with five foundational principles: complete API decoupling, deterministic scoring, pure offline static analysis, strict honest semantics, and in-flight secret scrubbing.">
+      <div class="slide-tag">Core Value Proposition</div>
+      <h1 class="slide-title">The InfraGuard Approach</h1>
+      <h2 class="slide-subtitle">Deterministic, verifiable, and decoupled static infrastructure security</h2>
+
+      <div class="grid-3">
+        <div class="card">
+          <h3>1. Decoupled Architecture</h3>
+          <p>FastAPI backend with OpenAPI docs. Streamlit dashboard consumes strictly public REST APIs. Usable anywhere: curl, CLI, or UI.</p>
+        </div>
+        <div class="card">
+          <h3>2. Deterministic Scoring</h3>
+          <p>Mathematical penalty deductions from 100 with explainable risk bands: <span class="highlight">LOW</span>, <span class="highlight">MODERATE</span>, <span class="highlight">HIGH</span>, and <span class="highlight">CRITICAL</span>.</p>
+        </div>
+        <div class="card">
+          <h3>3. Zero Credential Risk</h3>
+          <p>Evaluates parsed Abstract Syntax Trees (AST). Never contacts AWS, Azure, or GCP. No shell execution. No terraform binaries.</p>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 20px;">
+        <div class="card">
+          <h3>4. Honest Status Semantics</h3>
+          <p>Explicit 4-state lifecycle: <span class="badge badge-low">PASS</span>, <span class="badge badge-critical">FAIL</span>, <span class="badge badge-medium">NOT_EVALUATED</span>, and <span class="badge badge-high">UNSUPPORTED</span>. Unknown resources are never treated as compliant.</p>
+        </div>
+        <div class="card">
+          <h3>5. In-Flight Secret Redaction</h3>
+          <p>Automatic scrubbing of access keys, passwords, private keys, and API tokens prevents credentials from leaking into reports.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 4: System Architecture -->
+    <section class="slide" data-notes="Here is our end-to-end architecture. The frontend Streamlit dashboard and external curl/CI clients talk to the FastAPI backend over HTTP. The backend orchestrates upload validation, memory-only AST parsing, canonical normalization, deterministic rule evaluation, penalty scoring, and SQLite WAL persistence.">
+      <div class="slide-tag">Architectural Blueprint</div>
+      <h1 class="slide-title">System Architecture & Component Decoupling</h1>
+      <h2 class="slide-subtitle">Clear boundaries separating presentation, core orchestration, and persistence</h2>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Pipeline Flow</h3>
+          <pre>
+┌─────────────────────────────────────────────────────────┐
+│       Streamlit Dashboard / CI / curl (Port 8501)       │
+└────────────────────────────┬────────────────────────────┘
+                             │ HTTP /api/v1/scans
+┌────────────────────────────▼────────────────────────────┐
+│              FastAPI Application (Port 8000)            │
+│  [Upload & Input Validator] ➔ [Safe AST Parsers]        │
+│          ➔ [Resource Normalizer & Secret Redactor]      │
+│          ➔ [Rule Evaluator (25 Deterministic Rules)]    │
+│          ➔ [Risk Scorer & Penalty Deductor]             │
+├─────────────────────────────────────────────────────────┤
+│         SQLite WAL Database (ScanModel & Findings)      │
+└─────────────────────────────────────────────────────────┘</pre>
+        </div>
+        <div class="card">
+          <h3>Boundary Guarantees</h3>
+          <ul>
+            <li><b>API First:</b> All scanner features accessible via REST endpoints (<code class="highlight">/health</code>, <code class="highlight">/providers</code>, <code class="highlight">/rules</code>, <code class="highlight">/scans</code>).</li>
+            <li><b>Client Independence:</b> Frontend imports zero backend models, rule classes, or SQLAlchemy sessions.</li>
+            <li><b>Memory Safe:</b> Files parsed directly from memory buffers without temporary disk writes.</li>
+            <li><b>Persistence Across Reboots:</b> Scans, findings, and diagnostic metadata persist in SQLite WAL mode.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 5: The 25 Security Guardrails -->
+    <section class="slide" data-notes="We built a baseline of 25 comprehensive guardrails derived from CIS Benchmarks and AWS FSBP. Notice how every rule is mapped to canonical resource models and has standardized severity penalties.">
+      <div class="slide-tag">Security Baseline Matrix</div>
+      <h1 class="slide-title">25 Built-In Security Guardrails</h1>
+      <h2 class="slide-subtitle">Derived from CIS Benchmarks, AWS FSBP, Azure Security Benchmark, and GCP Foundations</h2>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Cloud Provider</th>
+              <th>Rule ID</th>
+              <th>Control Description</th>
+              <th>Severity</th>
+              <th>Benchmark Mapping</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="highlight">AWS</span> (11 Rules)</td>
+              <td><code>IG-AWS-001/002</code><br><code>IG-AWS-004/005</code><br><code>IG-AWS-007/008</code><br><code>IG-IAM-001</code></td>
+              <td>S3 Public Read/Write, S3 Block Public Access<br>Ingress SSH (22) & RDP (3389) Open to 0.0.0.0/0<br>RDS Publicly Accessible, Storage Unencrypted<br>Wildcard Admin IAM Permissions (*:*)</td>
+              <td><span class="badge badge-critical">Critical</span><br><span class="badge badge-critical">Critical</span><br><span class="badge badge-critical">Critical</span><br><span class="badge badge-critical">Critical</span></td>
+              <td>CIS AWS 2.1.5<br>CIS AWS 5.2/5.3<br>CIS AWS 2.3.1<br>CIS AWS 1.16</td>
+            </tr>
+            <tr>
+              <td><span class="highlight">Azure</span> (7 Rules)</td>
+              <td><code>IG-AZ-001/004</code><br><code>IG-AZ-002/003</code><br><code>IG-AZ-007</code></td>
+              <td>Storage Public Blob Access, HTTPS Secure Transfer<br>NSG Inbound SSH (22) & RDP (3389) Exposed<br>Database Public Network Access Enabled</td>
+              <td><span class="badge badge-high">High</span><br><span class="badge badge-critical">Critical</span><br><span class="badge badge-critical">Critical</span></td>
+              <td>CIS Azure 5.1.1<br>CIS Azure 6.1/6.2<br>CIS Azure 4.1.1</td>
+            </tr>
+            <tr>
+              <td><span class="highlight">GCP</span> (7 Rules)</td>
+              <td><code>IG-GCP-001</code><br><code>IG-GCP-002/003</code><br><code>IG-GCP-005/007</code></td>
+              <td>Cloud Storage Public IAM Access (allUsers)<br>Firewall Ingress SSH (22) & RDP (3389) Open<br>Uniform Bucket Access Disabled, Project IAM Grants</td>
+              <td><span class="badge badge-critical">Critical</span><br><span class="badge badge-critical">Critical</span><br><span class="badge badge-high">High</span></td>
+              <td>CIS GCP 5.1<br>CIS GCP 3.6/3.7<br>CIS GCP 5.2</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Slide 6: Risk Scoring & Status Semantics -->
+    <section class="slide" data-notes="Our scoring is mathematical and transparent. We start from 100 points and subtract points based on finding severities. A single critical issue drops the score by 25 points. We also enforce honest semantics: unknown resources are never marked pass.">
+      <div class="slide-tag">Mathematical Rigor</div>
+      <h1 class="slide-title">Transparent Risk Scoring & Semantics</h1>
+      <h2 class="slide-subtitle">Reproducible mathematical formulas replace arbitrary risk ratings</h2>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Deduction Formula</h3>
+          <p style="margin-bottom: 12px;">$$\text{Risk Score} = \max\left(0, 100 - \sum \text{Finding Penalties}\right)$$</p>
+          <ul>
+            <li><span class="badge badge-critical">Critical</span>: <b>25 points deduction</b> (Immediate threat)</li>
+            <li><span class="badge badge-high">High</span>: <b>15 points deduction</b> (Significant vulnerability)</li>
+            <li><span class="badge badge-medium">Medium</span>: <b>7 points deduction</b> (Defensive deficiency)</li>
+            <li><span class="badge badge-low">Low</span>: <b>2 points deduction</b> (Informational hygiene)</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Risk Bands & Evaluation Statuses</h3>
+          <div class="grid-2" style="margin-bottom: 16px;">
+            <div class="metric-box"><div class="metric-value" style="color:#10b981;">90-100</div><div class="metric-label">LOW RISK</div></div>
+            <div class="metric-box"><div class="metric-value" style="color:#3b82f6;">70-89</div><div class="metric-label">MODERATE</div></div>
+            <div class="metric-box"><div class="metric-value" style="color:#f59e0b;">40-69</div><div class="metric-label">HIGH RISK</div></div>
+            <div class="metric-box"><div class="metric-value" style="color:#ef4444;">0-39</div><div class="metric-label">CRITICAL</div></div>
+          </div>
+          <p><b>Strict Evaluation States:</b></p>
+          <p><code class="highlight">PASS</code>: Explicitly compliant • <code class="highlight">FAIL</code>: Concrete violation • <code class="highlight">NOT_EVALUATED</code>: Missing attribute • <code class="highlight">UNSUPPORTED</code>: Outside scope</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 7: Threat Model & Security Mitigations -->
+    <section class="slide" data-notes="Security tools must be secure themselves. We performed STRIDE and DREAD analyses. We enforce strict upload size limits, path traversal stripping, safe YAML parsing against RCE, and automated in-flight secret scrubbing.">
+      <div class="slide-tag">Defense-in-Depth</div>
+      <h1 class="slide-title">Threat Model & Hardened Ingestion</h1>
+      <h2 class="slide-subtitle">Protecting the auditor from malicious uploads, parser abuse, and secret leaks</h2>
+
+      <div class="grid-3">
+        <div class="card">
+          <h3>🛡️ Anti-RCE Safe Parsers</h3>
+          <p>PyYAML <code class="highlight">SafeLoader</code> augmented with custom AWS intrinsic scalar constructors prevents arbitrary Python deserialization exploits.</p>
+        </div>
+        <div class="card">
+          <h3>🛡️ Path Traversal Immunity</h3>
+          <p>Filenames are scrubbed via <code class="highlight">Path(filename).name</code>. Files are streamed in memory without writing uploaded code to the server disk.</p>
+        </div>
+        <div class="card">
+          <h3>🛡️ In-Flight Secret Scrubbing</h3>
+          <p>Recursive regex scrubber redacts credentials, passwords, AWS keys (<code class="highlight">AKIA...</code>), and RSA private keys before reports are generated.</p>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 20px;">
+        <div class="card">
+          <h3>Ingestion Guardrails</h3>
+          <ul>
+            <li>Max single file size: <b>5 MB</b></li>
+            <li>Max batch upload size: <b>20 MB / 50 files</b></li>
+            <li>Strict extension whitelist: <code class="highlight">.tf</code>, <code class="highlight">.yaml</code>, <code class="highlight">.yml</code>, <code class="highlight">.json</code></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Local Boundary Warning</h3>
+          <p>The unauthenticated MVP is engineered for local workstations or private CI runners. Public exposure on <code class="highlight">0.0.0.0</code> is explicitly warned against in documentation.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 8: Quality Engineering & Verification -->
+    <section class="slide" data-notes="Quality is verified by automated tests. We have 175 tests running in 1.74s with 89% code coverage, 100% clean Ruff linting, and automated GitHub Actions CI.">
+      <div class="slide-tag">Verification & Metrics</div>
+      <h1 class="slide-title">Quality Engineering & Test Results</h1>
+      <h2 class="slide-subtitle">Rigorous test-driven verification exceeding all PRD standards</h2>
+
+      <div class="grid-4" style="margin-bottom: 24px;">
+        <div class="metric-box">
+          <div class="metric-value">175</div>
+          <div class="metric-label">Automated Tests</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-value">89%</div>
+          <div class="metric-label">Backend Coverage</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-value">1.74s</div>
+          <div class="metric-label">Test Suite Runtime</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-value">0</div>
+          <div class="metric-label">Ruff Lint Errors</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Automated Test Categories</h3>
+          <ul>
+            <li><b>51 Rule Tests:</b> Positive, negative, edge-case, and malformed scenarios for every rule.</li>
+            <li><b>Lifecycle Integration:</b> End-to-end multi-file uploads, rule evaluation, and scoring.</li>
+            <li><b>Restart Persistence:</b> SQLite database engine reboots verifying data durability.</li>
+            <li><b>Security Tests:</b> Upload size limits, extension tampering, and path traversal rejection.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Automated CI/CD Workflow</h3>
+          <p>Every pull request triggers our GitHub Actions pipeline: dependency caching, strict Ruff lint check, Ruff format verification, and pytest coverage gate.</p>
+          <pre style="margin-top: 10px;">pytest --cov=app --cov-report=term-missing -v</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 9: Product Demo & User Journey -->
+    <section class="slide" data-notes="The user experience is seamless across both CLI and UI. In the Streamlit UI, the user selects a cloud provider, uploads files, sees interactive Plotly charts, drills into evidence lines, and exports JSON or CSV reports with one click.">
+      <div class="slide-tag">Interactive User Experience</div>
+      <h1 class="slide-title">The InfraGuard User Journey</h1>
+      <h2 class="slide-subtitle">Fast, intuitive, and actionable security reporting</h2>
+
+      <div class="grid-3">
+        <div class="card">
+          <h3>1. Dynamic Submission</h3>
+          <p>Provider dropdown automatically filters format options (e.g. AWS shows Terraform & CloudFormation; Azure/GCP show Terraform). Client-side validation catches empty files instantly.</p>
+        </div>
+        <div class="card">
+          <h3>2. Interactive Results</h3>
+          <p>Sub-second static audit generates interactive Plotly severity donut charts, overall risk gauge, and collapsible finding cards showing exact line evidence and step-by-step remediation.</p>
+        </div>
+        <div class="card">
+          <h3>3. Audit Trail & Export</h3>
+          <p>Past audits are recorded in a searchable SQLite history log with one-click reload. Audit reports download immediately in standardized JSON or CSV formats.</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 20px;">
+        <h3>Quickstart Commands</h3>
+        <pre>
+# Terminal 1: Start FastAPI REST Backend
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+
+# Terminal 2: Start Streamlit Interactive UI
+streamlit run dashboard/app.py</pre>
+      </div>
+    </section>
+
+    <!-- Slide 10: Production Roadmap -->
+    <section class="slide" data-notes="Looking ahead to enterprise deployment: we have designed clean extension points for OIDC single sign-on, role-based access control, PostgreSQL storage, native Azure Bicep and GCP Deployment Manager parsers, and native CI/CD action runners.">
+      <div class="slide-tag">Looking Forward</div>
+      <h1 class="slide-title">Enterprise Production Roadmap</h1>
+      <h2 class="slide-subtitle">Architected for seamless scaling from local MVP to enterprise SaaS</h2>
+
+      <div class="grid-3">
+        <div class="card">
+          <h3>🔐 Identity & RBAC</h3>
+          <p>OIDC / SAML SSO integration (Okta, Azure AD) with fine-grained role-based permissions (Auditor, SecOps Admin, Read-Only).</p>
+        </div>
+        <div class="card">
+          <h3>🏢 Multi-Tenant DB</h3>
+          <p>Transition from SQLite to managed PostgreSQL with tenant-partitioned schemas, connection pooling, and encryption at rest.</p>
+        </div>
+        <div class="card">
+          <h3>📦 Extended Formats</h3>
+          <p>Native template support for Azure Bicep / ARM templates, GCP Deployment Manager, and Terraform Plan JSON exports.</p>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 20px;">
+        <div class="card">
+          <h3>⚙️ CI/CD Native Runners</h3>
+          <p>Pre-commit git hooks and official GitHub Actions / GitLab CI components with configurable pass/fail risk score thresholds.</p>
+        </div>
+        <div class="card">
+          <h3>🤖 Sandboxed AI Remediation</h3>
+          <p>Optional LLM remediation assistant providing synthesized, auto-generated pull request diffs within a sandboxed environment.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 11: Conclusion -->
+    <section class="slide" data-notes="In conclusion, InfraGuard 1.0.0 meets and exceeds all 15 acceptance criteria defined in PRD.md. It is release-ready, robust, and verified. Thank you, and we invite your questions.">
+      <div class="slide-tag">Sign-Off & Readiness</div>
+      <h1 class="slide-title">InfraGuard 1.0.0 is Release Ready</h1>
+      <h2 class="slide-subtitle">Deterministic static security auditing for the modern cloud enterprise</h2>
+
+      <div class="grid-3" style="margin-bottom: 24px;">
+        <div class="card" style="text-align: center;">
+          <div class="metric-value">15 / 15</div>
+          <div class="metric-label">Acceptance Criteria Met</div>
+        </div>
+        <div class="card" style="text-align: center;">
+          <div class="metric-value">25</div>
+          <div class="metric-label">Security Guardrails Active</div>
+        </div>
+        <div class="card" style="text-align: center;">
+          <div class="metric-value">89%</div>
+          <div class="metric-label">Code Coverage Verified</div>
+        </div>
+      </div>
+
+      <div class="card" style="text-align: center; padding: 32px;">
+        <h3 style="justify-content: center; font-size: 1.5rem; color: #fff;">Ready for Deployment</h3>
+        <p style="margin-top: 8px;">Full source code, tests, documentation, and demo scripts available in the repository.</p>
+        <div style="margin-top: 20px; display: flex; justify-content: center; gap: 16px;">
+          <code class="highlight">http://127.0.0.1:8000/docs</code>
+          <code class="highlight">http://localhost:8501</code>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Speaker Notes Drawer -->
+  <div id="speaker-notes-drawer">
+    <div class="speaker-notes-title">🎙️ Speaker Notes (Press 'N' to toggle)</div>
+    <div class="speaker-notes-content" id="speaker-notes-text"></div>
+  </div>
+
+  <footer>
+    <div class="controls-left">
+      <span>Navigate: <span class="kbd">←</span> <span class="kbd">→</span> or <span class="kbd">Space</span></span>
+      <span>Notes: <span class="kbd">N</span></span>
+      <span>Fullscreen: <span class="kbd">F</span></span>
+    </div>
+    <div class="controls-right">
+      <button class="btn-ctrl" id="btn-notes">Notes</button>
+      <button class="btn-ctrl" id="btn-prev">Previous</button>
+      <button class="btn-ctrl" id="btn-next">Next</button>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      const slides = document.querySelectorAll('.slide');
+      const counter = document.getElementById('counter');
+      const progressBar = document.getElementById('progress-bar');
+      const btnPrev = document.getElementById('btn-prev');
+      const btnNext = document.getElementById('btn-next');
+      const btnNotes = document.getElementById('btn-notes');
+      const notesDrawer = document.getElementById('speaker-notes-drawer');
+      const notesText = document.getElementById('speaker-notes-text');
+
+      let currentSlide = 0;
+      const totalSlides = slides.length;
+
+      function updateSlide(index) {
+        if (index < 0) index = 0;
+        if (index >= totalSlides) index = totalSlides - 1;
+
+        slides.forEach((slide, i) => {
+          slide.classList.toggle('active', i === index);
+        });
+
+        currentSlide = index;
+        counter.textContent = `Slide ${currentSlide + 1} / ${totalSlides}`;
+        progressBar.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+
+        // Update speaker notes
+        const currentNotes = slides[currentSlide].getAttribute('data-notes') || 'No speaker notes for this slide.';
+        notesText.textContent = currentNotes;
+      }
+
+      function nextSlide() {
+        if (currentSlide < totalSlides - 1) updateSlide(currentSlide + 1);
+      }
+
+      function prevSlide() {
+        if (currentSlide > 0) updateSlide(currentSlide - 1);
+      }
+
+      function toggleNotes() {
+        notesDrawer.classList.toggle('open');
+      }
+
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      }
+
+      // Event Listeners
+      btnNext.addEventListener('click', nextSlide);
+      btnPrev.addEventListener('click', prevSlide);
+      btnNotes.addEventListener('click', toggleNotes);
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'Space') {
+          e.preventDefault();
+          nextSlide();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          prevSlide();
+        } else if (e.key === 'n' || e.key === 'N') {
+          e.preventDefault();
+          toggleNotes();
+        } else if (e.key === 'f' || e.key === 'F') {
+          e.preventDefault();
+          toggleFullscreen();
+        }
+      });
+
+      // Initialize first slide
+      updateSlide(0);
+    })();
+  </script>
+</body>
+</html>
